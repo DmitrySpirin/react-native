@@ -426,12 +426,30 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:(NSCoder *)aDecoder)
     _textView.text = @"";
     [self _setPlaceholderVisibility];
   }
+  NSUInteger textLength = textView.text.length;
+  CGFloat contentHeight = textView.contentSize.height;
+  if (textLength >= _previousTextLength) {
+    contentHeight = MAX(contentHeight, _previousContentHeight);
+  }
+  _previousTextLength = textLength;
+  _previousContentHeight = contentHeight;
+  //add content size
+  NSDictionary *event = @{
+                          @"text": self.text,
+                          @"contentSize": @{
+                              @"height": @(contentHeight),
+                              @"width": @(textView.contentSize.width)
+                              },
+                          @"target": self.reactTag,
+                          @"eventCount": @(_nativeEventCount),
+                          };
 
   [_eventDispatcher sendTextEventWithType:RCTTextEventTypeFocus
                                  reactTag:self.reactTag
                                      text:nil
                                       key:nil
                                eventCount:_nativeEventCount];
+  [_eventDispatcher sendInputEventWithName:@"change" body:event];
 }
 
 - (void)textViewDidChange:(UITextView *)textView
